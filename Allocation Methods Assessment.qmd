@@ -44,7 +44,7 @@ Table 1.- Assumed stock composition of for each harvest group in the age allocat
 ```{r, echo=F, message=FALSE, warning=F}
 
 # Import Age Allocation Results 
-AgeAllocation<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age Allocation Assessment/Data/AgeAllocationPerformance.csv"))   
+AgeAllocation<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/AgeAllocationPerformance.csv"))   
 
 AgeAllocation%>%filter(Allocation>0)%>%
   group_by(Fishery)%>%summarize(Stock=unique(Stock))%>%   
@@ -65,7 +65,7 @@ AgeAllocation%>%filter(Allocation>0)%>%
 Fishery-specific genetic stock identification estimates spanning 2005 to 2024 were complied from various reports (Barclay, A. W., 2020; Barclay and Chenoweth 2021; Barclay 2024; A. W. Barclay, Fishery Biologist, Alaska Department of Fish and Game, Anchorage, personal communication) into a centralized dataframe for further analysis. The fisheries sampled for GSI analyses have varied over the time series but have generally consisted of four major strata including: Central District Drift, Central District Set Gillnet (ESSN), Northern District, and Westside. When applicable, the average of corridors only and non-corridor GSI estimates were used to represent the Drift gillnet area strata to ensure comparability with age allocation model results (the age allocation model does not treat these fisheries independently). Furthermore, the average of Kalgin Island and Westside GSI estimates were used to represent the Westside area strata because these fisheries are often reported as an aggregate due to low sample sizes and the inability to ensure pure mixtures among these fisheries. Primary stocks represented in GSI analyses include Kenai, Kasilof, Crescent, Susitna rivers, Fish Creek, West Cook Inlet (West), and Knik/Turnagain/Northeast Cook Inlet (KTNE). Genetic stock identification estimates for the West and KTNE reporting groups were aggregated to represent "other" stocks in comparative analyses with age allocation model results.
 
 ```{r, echo=F, message=F}
-GSI<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age Allocation Assessment/Data/GSI.Aggregated.csv"))%>%
+GSI<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/GSI.Aggregated.csv"))%>%
   mutate(Stock=ifelse(Stock%in%"KTNE" | Stock%in%"West","Other",Stock))%>%
   group_by(Year, Fishery,Stock)%>%summarize(Comp=sum(Comp))
 ```
@@ -90,7 +90,7 @@ Harvest data was exported from OceanAk's Statewide Salmon Fishticket database as
 Table 1.- Statistical areas included within each fishery stratum.
 
 ```{r, echo=F, message=FALSE, warning=F}
-Harvest<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age Allocation Assessment/Data/Upper Cook Inlet Historical Harvest.csv"))%>%rename("Year"=Batch.Year)%>%
+Harvest<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/Upper Cook Inlet Historical Harvest.csv"))%>%rename("Year"=Batch.Year)%>%
   mutate(Fishery=ifelse(Stat.Area%in%c(24741,24742,24743,24710,24720,24730,24790,24780,24770),"Northern District",
                                ifelse(Stat.Area%in%c(24510,24520,24530,24540,24550,24555,24560,24610,24620)&Gear.Code==4,"Westside",
                                              ifelse(Stat.Area%in%c(24442,24441,24432,24431,24422,24421),"ESSN",
@@ -139,27 +139,28 @@ Several methods for inseason stock allocation were explored using a hindcasting 
 
 #### Age Allocation Model Performance
 
-Since 2017, the age allocation model has achieved an average CV score of 41.0 across all fisheries, stocks, and years. Precision was highest for the Kenai (CV = 29.8) and Other (CV = 35.9) stocks but lowest for the Kasilof (CV = 46.3) and Fish Creek (CV = 54.87) stocks. The Central District Drift (CV = 30.42) and Northern District fisheries (CV = 24.3) achieved the lowest average precision. No linear trends were detected in the precision of the age allocation model for each fishery and stock across individual time series. The age allocation model has had an average absolute error in estimating the commercial harvest of Kenai and Kasilof stocks of 55,000 (range: -252,700 to 96,000) and 48,500 (range: -187,000 to 321,600) fish respectively.
+Since 2017, the age allocation model has achieved an average CV score of 28.5 across all fisheries, stocks, and years. Precision was highest for the Susitna (CV = 22.3) and Other (CV = 23.31) stocks but lowest for the Crescent (CV=45.2), Kasilof (CV = 29.3) and Fish Creek (CV = 29.5) stocks. The Central District Drift (CV = 19.1) and Westside fisheries (CV = 24.3) achieved the highest average precision. No linear trends were detected in the precision of the age allocation model for each fishery and stock across individual time series. The age allocation model has had an average absolute error in estimating the commercial harvest of Kenai and Kasilof stocks of 41,900 (range: -252,700 to 96,000) and 45,800 (range: -187,000 to 321,600) fish respectively.
 
 ```{r, echo=F, message=FALSE, warning=F, include=F}
 GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
   mutate(True.Harvest=Comp*Harvest)%>%
   filter(Year>2016)%>%
-  filter(!Comp%in%NA & Allocation>0)%>%
+  filter(!Comp%in%NA)%>%
   select(1:3,Allocation,True.Harvest)%>%
-  rowwise() %>%
-  mutate(CV = round((sd(c_across(Allocation:True.Harvest))/
-                       mean(c_across(Allocation:True.Harvest)))*100, digits=2))%>%
+  rowwise()%>%
+  mutate(SD=sd(Allocation:True.Harvest),
+         Mean=mean(Allocation:True.Harvest),
+         CV=(SD/Mean)*100)%>%
   select(Year,Fishery,Stock,CV)%>%
   group_by(Fishery)%>%
-  summarize(CV=mean(CV))
+  summarize(CV=mean(CV,na.rm=T))
 
 
 GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
   mutate(True.Harvest=Comp*Harvest)%>%
   filter(Year>2016)%>%
-  filter(!Comp%in%NA & Allocation>0)%>%
-  mutate(Diff=Allocation-True.Harvest)%>%
+  filter(!Comp%in%NA)%>%
+  mutate(Diff=abs(Allocation-True.Harvest))%>%
   group_by(Stock)%>%
   summarize(Mean=mean(Diff), min=min(Diff), max=max(Diff))
 
@@ -172,17 +173,45 @@ Table 3.- Average precision, measured by coefficient of variation, between stock
 By.Stock.Fishery<-GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
   mutate(True.Harvest=Comp*Harvest)%>%
   filter(Year>2016)%>%
-  filter(!Comp%in%NA & Allocation>0)%>%
+  filter(!Comp%in%NA)%>%
   select(1:3,Allocation,True.Harvest)%>%
-  rowwise() %>%
-  mutate(CV = round((sd(c_across(Allocation:True.Harvest))/
-                       mean(c_across(Allocation:True.Harvest)))*100, digits=2))%>%
-  select(Year,Fishery,Stock,CV)%>%
+  rowwise()%>%
+  mutate(SD=sd(Allocation:True.Harvest),
+         Mean=mean(Allocation:True.Harvest),
+         CV=(SD/Mean)*100)%>%
+  select(Fishery,Stock,CV)%>%
   group_by(Stock, Fishery)%>%
-  summarize(CV=mean(CV))
+  summarize(CV=mean(CV, na.rm = T))
   
   
-By.Stock.Fishery%>%rbind(By.Stock.Fishery%>%group_by(Fishery)%>%summarize(CV=mean(CV))%>%mutate(Stock="Fishery Average"),By.Stock.Fishery%>%group_by(Stock)%>%summarize(CV=mean(CV))%>%mutate(Fishery="Stock Average"))%>%
+By.Stock.Fishery%>%
+  rbind(GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  filter(Year>2016)%>%
+  filter(!Comp%in%NA)%>%
+  select(1:3,Allocation,True.Harvest)%>%
+  rowwise()%>%
+  mutate(SD=sd(Allocation:True.Harvest),
+         Mean=mean(Allocation:True.Harvest),
+         CV=(SD/Mean)*100)%>%
+  select(Fishery,Stock,CV)%>%
+  group_by(Fishery)%>%
+  summarize(CV=mean(CV, na.rm = T))%>%
+  mutate(Stock="Fishery Average"),
+  
+  GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  filter(Year>2016)%>%
+  filter(!Comp%in%NA)%>%
+  select(1:3,Allocation,True.Harvest)%>%
+  rowwise()%>%
+  mutate(SD=sd(Allocation:True.Harvest),
+         Mean=mean(Allocation:True.Harvest),
+         CV=(SD/Mean)*100)%>%
+  select(Fishery,Stock,CV)%>%
+  group_by(Stock)%>%
+  summarize(CV=mean(CV, na.rm = T))%>%mutate(Fishery="Stock Average"))%>%
+  
   pivot_wider(values_from = CV, names_from=Fishery)%>%
   flextable()%>%
   theme_apa()%>%
@@ -204,9 +233,11 @@ Allocation.Summary<-GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
   mutate(True.Harvest=Comp*Harvest)%>%
   filter(Year>2016)%>%
   filter(!Comp%in%NA)%>%
-  select(-Harvest)%>%
-  rowwise() %>%
-  mutate(CV = (sd(c_across(Allocation:True.Harvest))/mean(c_across(Allocation:True.Harvest)))*100)%>%
+  select(1:3,Allocation,True.Harvest)%>%
+  rowwise()%>%
+  mutate(SD=sd(Allocation:True.Harvest),
+         Mean=mean(Allocation:True.Harvest),
+         CV=(SD/Mean)*100)%>%
   select(1:3,CV)%>%
   mutate(Method="Age Allocation")
 
@@ -236,25 +267,31 @@ RollFigure<-GSIMeans%>%select(Year, Fishery, Stock, True.Harvest, RollHarvest3:R
 
 ROll3<-GSIMeans%>%filter(!Roll3%in%NA)%>%filter(Year>2016)%>%
   select(Year, Fishery, Stock, True.Harvest,RollHarvest3)%>%
-  group_by(Stock,Fishery)%>%
+  filter(!True.Harvest%in%NA)%>%
   rowwise() %>%
-  mutate(CV = (sd(c_across(True.Harvest:RollHarvest3))/mean(c_across(True.Harvest:RollHarvest3)))*100)%>%
+  mutate(SD=sd(True.Harvest:RollHarvest3),
+         Mean=mean(True.Harvest:RollHarvest3),
+         CV=(SD/Mean)*100)%>%
    select(1:3,CV)%>%
   mutate(Method="Roll 3")
 
 Roll5<-GSIMeans%>%filter(!Roll5%in%NA)%>%filter(Year>2016)%>%
   select(Year, Fishery, Stock, True.Harvest,RollHarvest5)%>%
-  group_by(Stock,Fishery)%>%
+   filter(!True.Harvest%in%NA)%>%
   rowwise() %>%
-  mutate(CV = (sd(c_across(True.Harvest:RollHarvest5))/mean(c_across(True.Harvest:RollHarvest5)))*100)%>%
+  mutate(SD=sd(True.Harvest:RollHarvest5),
+         Mean=mean(True.Harvest:RollHarvest5),
+         CV=(SD/Mean)*100)%>%
    select(1:3,CV)%>%
   mutate(Method="Roll 5")
 
 Roll10<-GSIMeans%>%filter(!Roll10%in%NA)%>%filter(Year>2016)%>%
   select(Year, Fishery, Stock, True.Harvest,RollHarvest10)%>%
-  group_by(Stock,Fishery)%>%
+   filter(!True.Harvest%in%NA)%>%
   rowwise() %>%
-  mutate(CV = (sd(c_across(True.Harvest:RollHarvest10))/mean(c_across(True.Harvest:RollHarvest10)))*100)%>%
+  mutate(SD=sd(True.Harvest:RollHarvest10),
+         Mean=mean(True.Harvest:RollHarvest10),
+         CV=(SD/Mean)*100)%>%
    select(1:3,CV)%>%
   mutate(Method="Roll 10")
 
@@ -274,30 +311,40 @@ EXPOFigure<-GSIEXPO%>%
   mutate(Predicted=Harvest*Predicted)%>%
   select(-c(Harvest,Comp,Lagged))
   
-  
-  
 
-EXP3<-GSIEXPO%>%select(1:4,6)%>%filter(!Smoothed3%in%NA & !Comp%in%NA)%>%filter(Year>2016)%>%
-  group_by(Stock,Fishery)%>%
-  rowwise() %>%
-  mutate(CV = (sd(c_across(Comp:Smoothed3))/mean(c_across(Comp:Smoothed3)))*100)%>%
+
+
+EXP3<-GSIEXPO%>%left_join(Harvest.Sum)%>%
+  mutate(Smoothed3=Smoothed3*Harvest, True.Harvest=Harvest*Comp)%>%
+  select(Year, Fishery, Stock,Smoothed3, True.Harvest)%>%
+  filter(!Smoothed3%in%NA & !True.Harvest%in%NA)%>%
+  filter(Year>2016)%>%
+  rowwise()%>%
+  mutate(SD=sd(True.Harvest:Smoothed3),
+         Mean=mean(True.Harvest:Smoothed3),
+         CV=(SD/Mean)*100)%>%
   select(1:3,CV)%>%
   mutate(Method="Expo 3")
 
 
-EXP5<-GSIEXPO%>%select(1:4,7)%>%filter(!Smoothed5%in%NA & !Comp%in%NA)%>%filter(Year>2016)%>%
-  group_by(Stock,Fishery)%>%
-  rowwise() %>%
-  mutate(CV = (sd(c_across(Comp:Smoothed5))/mean(c_across(Comp:Smoothed5)))*100)%>%
+EXP5<-GSIEXPO%>%select(1:4,7)%>%
+  filter(!Smoothed5%in%NA | !Comp%in%NA)%>%
+  filter(Year>2016)%>%
+  ungroup()%>%
+  mutate(SD=sd(Comp:Smoothed5),
+         Mean=mean(Comp:Smoothed5),
+         CV=(SD/Mean)*100)%>%
   select(1:3,CV)%>%
   mutate(Method="Expo 5")
 
 
 
-EXP10<-GSIEXPO%>%select(1:4,8)%>%filter(!Smoothed10%in%NA & !Comp%in%NA)%>%filter(Year>2016)%>%
-  group_by(Stock,Fishery)%>%
-  rowwise() %>%
-  mutate(CV = (sd(c_across(Comp:Smoothed10))/mean(c_across(Comp:Smoothed10)))*100)%>%
+EXP10<-GSIEXPO%>%select(1:4,8)%>%
+  filter(!Smoothed10%in%NA | !Comp%in%NA)%>%
+  filter(Year>2016)%>%
+  mutate(SD=sd(Comp:Smoothed10),
+         Mean=mean(Comp:Smoothed10),
+         CV=(SD/Mean)*100)%>%
   select(1:3,CV)%>%
   mutate(Method="Expo 10")
 
