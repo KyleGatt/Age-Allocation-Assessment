@@ -1,0 +1,417 @@
+---
+title: "Allocation Methods Assessment"
+author: "Kyle Gatt"
+format: html
+editor: visual
+theme: journal
+---
+
+```{r, echo=F, include=F}
+library(dplyr)
+library(tidyr)
+library(zoo)
+library(scales)
+library(forecast)
+library(tseries)
+library(TTR)
+library(Metrics)
+library(ggplot2)
+library(purrr)
+library(flextable)
+library(DT)
+
+```
+
+## Background
+
+Stock-specific harvest estimates for primary Upper Cook Inlet (UCI) sockeye salmon stocks have been generated using various methods over the years. From 1976 to 1998, scale pattern analysis was the primary stock apportionment method but proved unreliable. In 1999, a weighted age allocation model was introduced (see Tobias and Willette 2013 for details) but later replaced in 2005 with genetic stock identification (GSI). The age allocation model remains the primary source for inseason stock specific harvest estimates but are replaced post-season with GSI estimates for brood table development. Late-run Kenai River sockeye salmon estimates derived from the age allocation model are used to inform the Kenai River sockeye salmon inriver escapement goal under 5 AAC 21.360 of the *Kenai River Late-Run Sockeye Salmon Management Plan*.
+
+Performance of the age allocation model has not been readily tracked over time since its initial development. Though the model has proven as a valuable tool for generating inseason stock specific harvest estimates, this approach requires large sample sizes and time sensitive age composition data. Due to funding and staffing challenges, alternative methods of inseason stock apportionment need to be explored. Thus, objective of this analysis is to two fold:
+
+1.  Assess the performance of the age allocation model for generating inseason stock-specific harvest estimates.
+2.  Explore alternative methods to the age allocation model that utilize historical GSI data for generating inseason stock-specific harvest estimates.
+
+## Methods
+
+#### Age Allocation Data
+
+In general, the age allocation model uses the relative contribution of an age class in a stock's escapement to represent the relative contribution of that age class in the commercial harvest for a specific time and area (fishery strata) fished. Each fishery has an assumed stock composition to represent the overall harvest which is based on a stock's proximity to a fishery (Table 1). Timely inseason age composition data from both the commercial harvests and escapements are required to inform the model. However, since the model was initial development several of the primary stock assessment projects that contributed age composition data of escapements are no longer operational. Several stop gaps have been developed over the years to continue running the model. For example, the Susitna and Fish Creek stocks rely on pre-season forecasts of age compositions to these systems for allocation. Additionally, the Crescent River stock uses the age composition of the Westside harvest.
+
+Although the age allocation model approach has been used to generate stock-specific harvest estimates in Upper Cook Inlet since 1999, stock- and fishery-specific results were only available for years spanning 2017 to 2024 for this analysis.
+
+Table 1.- Assumed stock composition of for each harvest group in the age allocation model.
+
+```{r, echo=F, message=FALSE, warning=F}
+
+# Import Age Allocation Results 
+AgeAllocation<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age Allocation Assessment/Data/AgeAllocationPerformance.csv"))   
+
+AgeAllocation%>%filter(Allocation>0)%>%
+  group_by(Fishery)%>%summarize(Stock=unique(Stock))%>%   
+  group_by(Fishery)%>%summarize(Stock=paste(Stock, collapse = ", "))%>%   
+  flextable()%>%   theme_apa()%>%   
+  line_spacing(space = 1,part = "all")%>%   
+  align(j=1,align="left", part = "all")%>%   
+  align(j=2,align="left", part = "all")%>%   
+  set_header_labels(values = c("Area Strata", "Stock"))%>%   
+  fix_border_issues()%>%   autofit()
+
+```
+
+#### 
+
+#### Genetic Stock Identification Data
+
+Fishery-specific genetic stock identification estimates spanning 2005 to 2024 were complied from various reports (Barclay, A. W., 2020; Barclay and Chenoweth 2021; Barclay 2024; A. W. Barclay, Fishery Biologist, Alaska Department of Fish and Game, Anchorage, personal communication) into a centralized dataframe for further analysis. The fisheries sampled for GSI analyses have varied over the time series but have generally consisted of four major strata including: Central District Drift, Central District Set Gillnet (ESSN), Northern District, and Westside. When applicable, the average of corridors only and non-corridor GSI estimates were used to represent the Drift gillnet area strata to ensure comparability with age allocation model results (the age allocation model does not treat these fisheries independently). Furthermore, the average of Kalgin Island and Westside GSI estimates were used to represent the Westside area strata because these fisheries are often reported as an aggregate due to low sample sizes and the inability to ensure pure mixtures among these fisheries. Primary stocks represented in GSI analyses include Kenai, Kasilof, Crescent, Susitna rivers, Fish Creek, West Cook Inlet (West), and Knik/Turnagain/Northeast Cook Inlet (KTNE). Genetic stock identification estimates for the West and KTNE reporting groups were aggregated to represent "other" stocks in comparative analyses with age allocation model results.
+
+```{r, echo=F, message=F}
+GSI<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age Allocation Assessment/Data/GSI.Aggregated.csv"))%>%
+  mutate(Stock=ifelse(Stock%in%"KTNE" | Stock%in%"West","Other",Stock))%>%
+  group_by(Year, Fishery,Stock)%>%summarize(Comp=sum(Comp))
+```
+
+```{r, echo=F, message=FALSE, warning=F}
+GSI%>%ggplot()+
+  geom_bar(aes(Year,round(Comp,digits=2),fill=Stock),stat="identity")+
+  facet_grid(Fishery~.)+
+  theme_bw()+
+  ylab("Proportion of harvest")+
+  xlab("")+
+  theme(text = element_text(family = "serif")) 
+
+```
+
+Figure 1.- Historical GSI estimates for primary sampled fisheries, 2005 to 2024.
+
+#### Commercial Harvest Data
+
+Harvest data was exported from OceanAk's Statewide Salmon Fishticket database as annual totals of sockeye salmon harvest by statistical area using the following filters: Management Unit Code == "UCI", Harvest Code /= "21; 22 ;23 ;24; 41; 42; 43", Species Code == 420, Batch year is between 2005 and 2024. Annual totals were then assigned to fishery strata based on statistical area and gear code (Table 2). Once assigned to a fishery, statistical area harvest totals were summed by year for fishery specific annual grand totals (Figure 2).
+
+Table 1.- Statistical areas included within each fishery stratum.
+
+```{r, echo=F, message=FALSE, warning=F}
+Harvest<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age Allocation Assessment/Data/Upper Cook Inlet Historical Harvest.csv"))%>%rename("Year"=Batch.Year)%>%
+  mutate(Fishery=ifelse(Stat.Area%in%c(24741,24742,24743,24710,24720,24730,24790,24780,24770),"Northern District",
+                               ifelse(Stat.Area%in%c(24510,24520,24530,24540,24550,24555,24560,24610,24620)&Gear.Code==4,"Westside",
+                                             ifelse(Stat.Area%in%c(24442,24441,24432,24431,24422,24421),"ESSN",
+                                                                  ifelse(Gear.Code==3,"Central District Drift","Error")))))%>%
+  filter(!Fishery%in%"Error")
+
+# SummarizeHarvest dat
+Harvest.Sum<-Harvest%>%group_by(Year,Fishery)%>%summarize(Harvest=sum(Number.Of.Animals..sum.))
+
+
+Harvest%>%group_by(Fishery)%>%summarize(Stat.Area=as.factor(unique(Stat.Area)))%>%
+  group_by(Fishery)%>%summarize(Stat.Area=paste(Stat.Area, collapse = ", "))%>%
+  flextable()%>%
+  theme_apa()%>%
+  line_spacing(space = 1,part = "all")%>%
+  align(j=1,align="left", part = "all")%>%
+  align(j=2,align="left", part = "all")%>%
+  set_header_labels(values = c("Fishery Strata", "Statistical area"))%>%
+  fix_border_issues()%>%
+  autofit()
+```
+
+```{r, echo=F, message=FALSE, warning=F}
+
+Harvest.Sum%>%
+  ggplot()+
+  geom_bar(aes(Year,Harvest, fill=Fishery), stat="identity")+
+  theme_classic()+
+  scale_y_continuous(labels = comma)+
+  labs(fill='Fishery strata')+
+  ylab("Total Harvest")+
+  xlab("")+
+  theme(text = element_text(family = "serif")) 
+
+```
+
+Figure 2.- Harvest totals by fishery strata, 2005 to 2024.
+
+#### Data Analysis
+
+Age allocation model performance was assessed for each stock across all fisheries and years using coefficient of variation (CV) between GSI and age allocation stock compositions. Coefficient of variation was chosen over other metrics as to ensure a meaningful zero value for fisheries in which the age allocation model did not assume the full compliment of stock composition. Prior to estimating CV values, GSI and harvest datasets were truncated to years spanning 2017 to 2024 to ensure comparable results among methods. GSI derived allocation estimates were assumed to be the true stock composition of commercial harvests for all analyses reported here.
+
+Several methods for inseason stock allocation were explored using a hindcasting approach with historical fishery-specific GSI data. Stock compositions for each fishery were first lagged by one year and a 3-, 5-, and 10-year rolling average applied. An exponential smoothing approach was also explored by following a similar approach but using 3-, 5-, and 10-year sliding windows. Simulated stock compositions were applied to the commercial harvests for each year and fishery to produce inseason stock-specific harvest estimates. Performance of alternative stock allocation methods were assessed using CV against realized GSI estimates. CV scores among allocation methods were statistically compared using an analysis of variance test (ANOVA) with a Tukey's HSD post-hoc procedure to identify the location of significant differences among allocation methods.
+
+## Results
+
+#### Age Allocation Model Performance
+
+Since 2017, the age allocation model has achieved an average CV score of 41.0 across all fisheries, stocks, and years. Precision was highest for the Kenai (CV = 29.8) and Other (CV = 35.9) stocks but lowest for the Kasilof (CV = 46.3) and Fish Creek (CV = 54.87) stocks. The Central District Drift (CV = 30.42) and Northern District fisheries (CV = 24.3) achieved the lowest average precision. No linear trends were detected in the precision of the age allocation model for each fishery and stock across individual time series. The age allocation model has had an average absolute error in estimating the commercial harvest of Kenai and Kasilof stocks of 55,000 (range: -252,700 to 96,000) and 48,500 (range: -187,000 to 321,600) fish respectively.
+
+```{r, echo=F, message=FALSE, warning=F, include=F}
+GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  filter(Year>2016)%>%
+  filter(!Comp%in%NA & Allocation>0)%>%
+  select(1:3,Allocation,True.Harvest)%>%
+  rowwise() %>%
+  mutate(CV = round((sd(c_across(Allocation:True.Harvest))/
+                       mean(c_across(Allocation:True.Harvest)))*100, digits=2))%>%
+  select(Year,Fishery,Stock,CV)%>%
+  group_by(Fishery)%>%
+  summarize(CV=mean(CV))
+
+
+GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  filter(Year>2016)%>%
+  filter(!Comp%in%NA & Allocation>0)%>%
+  mutate(Diff=Allocation-True.Harvest)%>%
+  group_by(Stock)%>%
+  summarize(Mean=mean(Diff), min=min(Diff), max=max(Diff))
+
+```
+
+Table 3.- Average precision, measured by coefficient of variation, between stock-specific harvest estimates generated by age allocation model and GSI methods for each stock and fishery.
+
+```{r, echo=F, message=FALSE, warning=F}
+
+By.Stock.Fishery<-GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  filter(Year>2016)%>%
+  filter(!Comp%in%NA & Allocation>0)%>%
+  select(1:3,Allocation,True.Harvest)%>%
+  rowwise() %>%
+  mutate(CV = round((sd(c_across(Allocation:True.Harvest))/
+                       mean(c_across(Allocation:True.Harvest)))*100, digits=2))%>%
+  select(Year,Fishery,Stock,CV)%>%
+  group_by(Stock, Fishery)%>%
+  summarize(CV=mean(CV))
+  
+  
+By.Stock.Fishery%>%rbind(By.Stock.Fishery%>%group_by(Fishery)%>%summarize(CV=mean(CV))%>%mutate(Stock="Fishery Average"),By.Stock.Fishery%>%group_by(Stock)%>%summarize(CV=mean(CV))%>%mutate(Fishery="Stock Average"))%>%
+  pivot_wider(values_from = CV, names_from=Fishery)%>%
+  flextable()%>%
+  theme_apa()%>%
+  line_spacing(space = 1)%>%
+  hline(i=6)%>%
+  autofit()
+ 
+
+
+```
+
+#### Alternative Inseason Apportionment Methods
+
+Alternative allocation methods produced generally similar stock-specific harvest estimates as the age allocation model approach for most stock and years (Figure 3). Variation of precision was greater for age allocation model estimates than was for alternative methods for most stocks (Figure 4). Greater variation in precision estimates for the age allocation model was primarily due to the presence of zeros for fisheries that did not assume the full compliment of stock composition. All alternative allocation methods were significantly more precise at estimating stock-specific harvest estimates than the age allocation model across all years, fisheries, and stocks except for the 3-year rolling mean (Table 4). No allocation method was significantly more precise at estimating stock composition when compared against each other (Table 4). The most precise alternative method for stock allocation varied by stock (Table 5).
+
+```{r, echo=F, message=FALSE, warning=F,include=F}
+
+Allocation.Summary<-GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  filter(Year>2016)%>%
+  filter(!Comp%in%NA)%>%
+  select(-Harvest)%>%
+  rowwise() %>%
+  mutate(CV = (sd(c_across(Allocation:True.Harvest))/mean(c_across(Allocation:True.Harvest)))*100)%>%
+  select(1:3,CV)%>%
+  mutate(Method="Age Allocation")
+
+
+
+
+# What about using rolling means?
+  # This is somewhat of an improvement
+GSIMeans<-GSI%>%group_by(Fishery,Stock)%>%
+  mutate(Lagged=lag(Comp,1),
+    Roll3=rollmean(Lagged,k=3, fill=NA, na.rm=T, align="right"),
+         Roll5=rollmean(Lagged,k=5, fill=NA, na.rm=T, align="right"),
+         Roll10=rollmean(Lagged,k=10, fill=NA, na.rm=T, align="right"))%>%
+  group_by(Fishery, Stock)%>%
+  fill(c(Roll3,Roll5,Roll10),.direction = "down")%>%
+  left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest,
+         RollHarvest3=Roll3*Harvest,
+         RollHarvest5=Roll5*Harvest,
+         RollHarvest10=Roll10*Harvest)
+
+
+RollFigure<-GSIMeans%>%select(Year, Fishery, Stock, True.Harvest, RollHarvest3:RollHarvest10)%>%
+  pivot_longer(cols=RollHarvest3:RollHarvest10, names_to = "Method",values_to = "Predicted")
+
+
+
+ROll3<-GSIMeans%>%filter(!Roll3%in%NA)%>%filter(Year>2016)%>%
+  select(Year, Fishery, Stock, True.Harvest,RollHarvest3)%>%
+  group_by(Stock,Fishery)%>%
+  rowwise() %>%
+  mutate(CV = (sd(c_across(True.Harvest:RollHarvest3))/mean(c_across(True.Harvest:RollHarvest3)))*100)%>%
+   select(1:3,CV)%>%
+  mutate(Method="Roll 3")
+
+Roll5<-GSIMeans%>%filter(!Roll5%in%NA)%>%filter(Year>2016)%>%
+  select(Year, Fishery, Stock, True.Harvest,RollHarvest5)%>%
+  group_by(Stock,Fishery)%>%
+  rowwise() %>%
+  mutate(CV = (sd(c_across(True.Harvest:RollHarvest5))/mean(c_across(True.Harvest:RollHarvest5)))*100)%>%
+   select(1:3,CV)%>%
+  mutate(Method="Roll 5")
+
+Roll10<-GSIMeans%>%filter(!Roll10%in%NA)%>%filter(Year>2016)%>%
+  select(Year, Fishery, Stock, True.Harvest,RollHarvest10)%>%
+  group_by(Stock,Fishery)%>%
+  rowwise() %>%
+  mutate(CV = (sd(c_across(True.Harvest:RollHarvest10))/mean(c_across(True.Harvest:RollHarvest10)))*100)%>%
+   select(1:3,CV)%>%
+  mutate(Method="Roll 10")
+
+################################################################################
+# Using an exponential smoothing approach with varying window widths
+  
+GSIEXPO<-GSI%>%group_by(Stock, Fishery)%>% mutate(Lagged=lag(Comp,1))%>%filter(!Lagged%in%NA)%>%
+  mutate(Smoothed3=EMA(Lagged,n=3),
+         Smoothed5=EMA(Lagged,n=5),
+         Smoothed10=EMA(Lagged,n=10))
+
+
+EXPOFigure<-GSIEXPO%>%
+  pivot_longer(cols=Smoothed3:Smoothed10, names_to = "Method",values_to = "Predicted")%>%
+  left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  mutate(Predicted=Harvest*Predicted)%>%
+  select(-c(Harvest,Comp,Lagged))
+  
+  
+  
+
+EXP3<-GSIEXPO%>%select(1:4,6)%>%filter(!Smoothed3%in%NA & !Comp%in%NA)%>%filter(Year>2016)%>%
+  group_by(Stock,Fishery)%>%
+  rowwise() %>%
+  mutate(CV = (sd(c_across(Comp:Smoothed3))/mean(c_across(Comp:Smoothed3)))*100)%>%
+  select(1:3,CV)%>%
+  mutate(Method="Expo 3")
+
+
+EXP5<-GSIEXPO%>%select(1:4,7)%>%filter(!Smoothed5%in%NA & !Comp%in%NA)%>%filter(Year>2016)%>%
+  group_by(Stock,Fishery)%>%
+  rowwise() %>%
+  mutate(CV = (sd(c_across(Comp:Smoothed5))/mean(c_across(Comp:Smoothed5)))*100)%>%
+  select(1:3,CV)%>%
+  mutate(Method="Expo 5")
+
+
+
+EXP10<-GSIEXPO%>%select(1:4,8)%>%filter(!Smoothed10%in%NA & !Comp%in%NA)%>%filter(Year>2016)%>%
+  group_by(Stock,Fishery)%>%
+  rowwise() %>%
+  mutate(CV = (sd(c_across(Comp:Smoothed10))/mean(c_across(Comp:Smoothed10)))*100)%>%
+  select(1:3,CV)%>%
+  mutate(Method="Expo 10")
+
+
+
+Methods<-rbind(ROll3,Roll5, Roll10, EXP3, EXP5, EXP10, Allocation.Summary)
+
+```
+
+```{r, echo=F, message=FALSE, warning=F,fig.height=10}
+
+Allocation.Figure<-GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  rename("Predicted"=Allocation)%>%select(Year, Fishery, Stock, True.Harvest, Predicted)%>%
+  mutate(Method="Age Allocation")
+
+RollFigure<-GSIMeans%>%select(Year, Fishery, Stock, True.Harvest, RollHarvest3:RollHarvest10)%>%
+  pivot_longer(cols=RollHarvest3:RollHarvest10, names_to = "Method",values_to = "Predicted")
+
+EXPOFigure<-GSIEXPO%>%
+  pivot_longer(cols=Smoothed3:Smoothed10, names_to = "Method",values_to = "Predicted")%>%
+  left_join(Harvest.Sum)%>%
+  mutate(True.Harvest=Comp*Harvest)%>%
+  mutate(Predicted=Harvest*Predicted)%>%
+  select(-c(Harvest,Comp,Lagged))
+
+
+
+rbind(Allocation.Figure,RollFigure,EXPOFigure)%>%
+  group_by(Year,Stock,Method)%>%summarize(True.Harvest=sum(True.Harvest,na.rm=T), Predicted=sum(Predicted,na.rm=T))%>%
+  filter(Predicted>0)%>%
+  ggplot(aes(x=Year))+
+  geom_bar(aes(y=True.Harvest), stat="sum", na.rm=T, show.legend = F)+
+  geom_point(aes(y=Predicted,color=Method),size=2)+
+  facet_grid(Stock~., scales="free")+
+   annotate(geom = 'rect', xmin = 2016.5, xmax = 2025, ymin= 0, ymax= Inf,
+               fill = 'grey20', alpha = 0.1)+
+  theme_bw()+
+   scale_y_continuous(labels = comma)+
+  xlab("")+
+  ylab("Harvest")+
+  theme(text = element_text(family = "serif")) 
+
+
+
+```
+
+Figure 3.- Stock-specific harvest estimates by year and allocation method. The grey shaded region represents the time frame for which age allocation model results are available.
+
+```{r, echo=F, message=FALSE, warning=F}
+
+Methods%>%
+  ggplot()+
+  geom_boxplot(aes(Method,CV))+
+  facet_grid(Stock~., scales="free")+
+  theme_classic()+
+  ylab("Coefficient of Variation (CV)")+
+  xlab("Apportionment Method")+
+  theme(text = element_text(family = "serif"))
+
+```
+
+Figure 4.- Boxplots of CV scores across all years and fisheries for each inseason stock allocation method.
+
+Table 4.- Tukey post-hoc procedure model output for stock allocation method comparisons.
+
+```{r, echo=F, message=FALSE, warning=F}
+
+TukeyHSD(aov(log(CV)~Method, Methods))
+
+```
+
+Table 5.- Top three selected allocation methods by stock based on the average CV score across all years and fisheries.
+
+```{r, echo=F, message=FALSE, warning=F}
+rbind(ROll3,Roll5, Roll10, EXP3, EXP5, EXP10, Allocation.Summary)%>%
+  group_by(Stock,Method)%>%
+  summarize(CV=mean(CV,na.rm=T))%>%
+  group_by(Stock)%>%
+  arrange(CV)%>%
+  group_by(Stock)%>%
+  slice_min(CV, n=3)%>%
+  flextable()%>%
+  theme_apa()%>%
+  line_spacing(space=1)%>%
+  merge_v(j=1)%>%
+  valign(valign = "top", j=1)%>%
+  autofit()
+
+```
+
+## Recommendations
+
+Overall, the age allocation model performed relatively well at estimating stock-specific harvest estimates when compared to GSI estimates. This was especially the case for estimating the Kenai component of the Drift harvest. However, the age allocation model struggled to allocate less represented stocks in several fisheries.
+
+When compared to alternative methods, the age allocation was the less optimal approach in regards to precision. **A*dditionally, because the age allocation model is statistically complex run and requires significant effort to generate timely inseason age composition data, we recommend no longer using this approach to estimate inseason stock-specific harvest estimates. Instead, alternative approaches presented here should be adopted but further refined with a model selection approach for each fishery based on past performance.***
+
+Adopting the alternative methods of inseason stock allocations presented here offer several benefits. No longer using the age allocation model approach alleviates the burden of generating timely inseason age composition which had historically come at the cost of lack of quality control measures being implemented in the aging program. The reduced need of inseason aging will allow re-allocation of resources to less monitored fisheries (e.g., Northern District North). Also, adoption of alternative methods will allow for greater resolution in stock allocations for less represented stock and fisheries. For example, the age allocation model did not allow for parsing out of the Drift Corridor only and Drift non-corridor harvests, which are fisheries that have consistently different stock compositions. This issue can be seen in Figure 3 were the age allocation model had consistently over estimated the Kasilof component of the drift harvest in recent years.
+
+## References
+
+Barclay, A. W. 2020. Compilation (2005–2019) of genetic stock identification estimates of sockeye salmon harvest from sampled Upper Cook Inlet commercial fisheries; Susitna River components reported both separately and combined. Alaska Department of Fish and Game, Division of Commercial Fisheries, Regional Information Report 5J20-02, Anchorage.
+
+Barclay, A. W., and E. L. Chenoweth. 2021. Genetic stock identification of Upper Cook Inlet sockeye salmon harvest, 2020. Alaska Department of Fish and Game, Division of Commercial Fisheries, Regional Information Report No. 5J21-04, Anchorage.
+
+Barclay, A. W. 2024. Genetic stock composition estimates for the Upper Cook Inlet sockeye salmon commercial fishery, 2021–2023. Alaska Department of Fish and Game, Division of Commercial Fisheries, Regional Information Report No. 5J24-02, Anchorage.
+
+Tobias T. M., and T. M. Willette. 2013. An estimate of total return of sockeye salmon to Upper Cook Inlet. Alaska, 1976–2008. Alaska Department of Fish and Game, Division of Commercial Fisheries, Regional Information Report 2A13-02, Anchorage.
+
+## Appendices
+
+Appendix 1.- Aggredated GSI, Harvest, and age allocation results used for analyses.
+
+```{r, echo=F, message=FALSE, warning=F}
+datatable(GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum))
+  
+```
