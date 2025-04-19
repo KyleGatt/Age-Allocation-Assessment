@@ -1,9 +1,25 @@
 ---
 title: "Allocation Methods Assessment"
-author: "Kyle Gatt"
-format: html
-editor: visual
+author: 
+  - name: Kyle Gatt
+    email: kyle.gatt@alaska.gov
+    roles:
+      - Lead investigator
+    affiliations:
+      - Alaska Department of Fish and Game
+keywords:
+  - Age allocation
+  - Genetic stock identifaction
+  - Upper Cook Inlet
+  - Late-run Kenai River sockeye salmon
+date: last-modified
 theme: journal
+format:
+  html: 
+    code-tools:
+      source: https://github.com/KyleGatt/Age-Allocation-Assessment
+editor: visual
+embed-resources: true
 ---
 
 ```{r, echo=F, include=F}
@@ -23,13 +39,15 @@ library(lubridate)
 library(TSrepr)
 library(gghighlight)
 library(tidyverse)
+
+
 ```
 
 # Background
 
-Stock allocation methods for commercially harvested sockeye salmon in Upper Cook Inlet (UCI) have varied over the years. From 1976 to 1998, scale pattern analysis was the primary stock allocation method but proved unreliable. In 1999, a weighted age allocation model was introduced (see Tobias and Willette 2013 for details) but later replaced in 2005 with genetic stock identification (GSI). The age allocation model remains the primary source for inseason (July to January) stock specific harvest estimates but are replaced post-season with GSI estimates for brood table development. Late-run Kenai River sockeye salmon estimates derived from the age allocation model are used inseason to inform the Kenai River sockeye salmon inriver escapement goal under 5 AAC 21.360 of the *Kenai River Late-Run Sockeye Salmon Management Plan*.
+Stock allocation methods for commercially harvested sockeye salmon in Upper Cook Inlet (UCI) have varied over the years. From 1976 to 1998, scale pattern analysis was the primary stock allocation method but proved unreliable. In 1999, a weighted age allocation model was introduced (see Tobias and Willette 2013 for details) but later replaced in 2005 with genetic stock identification (GSI). The age allocation model remains the primary source for inseason (July to January) stock-specific harvest estimates but are replaced with GSI estimates for brood table development. Late-run Kenai River sockeye salmon estimates derived from the age allocation model are used inseason to inform the Kenai River sockeye salmon inriver goal under 5 AAC 21.360 of the *Kenai River Late-Run Sockeye Salmon Management Plan*.
 
-Performance of the age allocation model has not been readily tracked over time since its initial development. Though the model has proven as a valuable tool for generating inseason stock specific harvest estimates, this approach requires large sample sizes and time sensitive age composition data. Due to funding and staffing challenges, alternative methods of inseason stock apportionment need to be explored. Thus, objective of this analysis is to three fold:
+Performance of the age allocation model has not been readily tracked over time since its initial development. Though the model has proven as a valuable tool for generating inseason stock-specific harvest estimates, this approach requires large sample sizes and time sensitive age composition data. Due to funding and staffing challenges, alternative methods of inseason stock apportionment need to be explored. Thus, objective of this analysis is to three fold:
 
 1.  *Assess the performance of the age allocation model for generating inseason stock-specific harvest estimates.*
 2.  *Explore alternative methods to the age allocation model that utilize historical GSI data for generating inseason stock-specific harvest estimates.*
@@ -39,13 +57,14 @@ Performance of the age allocation model has not been readily tracked over time s
 
 ### Age Allocation Data
 
-In general, the age allocation model uses the relative contribution of an age class in a stock's escapement to represent the relative contribution of that age class in the commercial harvest for a specific time and area (fishery strata) fished. Each fishery has an assumed stock composition to represent the overall harvest which is based on a stock's proximity to a fishery (Table 1). Timely inseason age composition data from both the commercial harvests and escapements are required to inform the model. However, since the model's initial development several of the primary stock assessment projects that contributed age composition data of escapements are no longer operational. Several stop gaps have been developed over the years to continue running the model. For example, the Susitna and Fish Creek stocks rely on pre-season forecasts of age compositions to these systems for allocation. Additionally, the Crescent River stock uses the age composition of the Westside harvest.
+In general, the age allocation model uses the relative contribution of an age class in a stock's escapement to represent the relative contribution of that age class in the commercial harvest for a specific time and area (fishery strata) fished. Each fishery has an assumed stock composition to represent the overall harvest which is based on a stock's proximity to a fishery (@tbl-stat). Timely inseason age composition data from both the commercial harvests and escapements are required to inform the model. However, since the model's initial development several of the primary stock assessment projects that contributed age composition data of escapements are no longer operational. Several stop gaps have been developed over the years to continue running the model. For example, the Susitna and Fish Creek stocks rely on pre-season forecasts of age compositions to these systems for allocation. Additionally, the Crescent River stock uses the age composition of the Westside harvest.
 
-Although the age allocation model approach has been used to generate stock-specific harvest estimates in Upper Cook Inlet since 1999, stock- and fishery-specific results were only available for years spanning 2017 to 2024 for this analysis. Additionally, the age allocation model analysis was performed in excel and only provided point estimates for each day the analysis was run.
-
-Table 1.- Assumed stock composition of for each harvest group in the age allocation model.
+Although the age allocation model has been used to generate stock-specific harvest estimates in Upper Cook Inlet since 1999, stock- and fishery-specific results were only available for years spanning 2017 to 2024 for this analysis. Additionally, the age allocation model analysis was performed in excel and only provided point estimates for each day the analysis was run in a given year.
 
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: tbl-stat
+#| tbl-cap: Assumed stock composition of for each harvest group in the age allocation model.
+
 
 # Import Age Allocation Results 
 AgeAllocation<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/AgeAllocationPerformance.csv"))   
@@ -64,7 +83,7 @@ AgeAllocation%>%filter(Allocation>0)%>%
 
 ### Genetic Stock Identification Data
 
-Fishery-specific genetic stock identification estimates spanning 2005 to 2024 were complied from various reports (Barclay, A. W., 2020; Barclay and Chenoweth 2021; Barclay 2024; A. W. Barclay, Fishery Biologist, Alaska Department of Fish and Game, Anchorage, personal communication) into a centralized dataframe for further analysis. The fisheries sampled for GSI analyses have varied over the time series but have generally consisted of four major strata including: Central District Drift, Central District Set Gillnet (ESSN), Northern District, and Westside. When applicable, the average of corridors only and non-corridor GSI estimates were used to represent the Drift gillnet area strata to ensure comparability with age allocation model results (the age allocation model does not treat these fisheries independently). Furthermore, the average of Kalgin Island and Westside GSI estimates were used to represent the Westside area strata because these fisheries are often reported as an aggregate due to low sample sizes and the inability to ensure pure mixtures among these fisheries. Primary stocks represented in GSI analyses include Kenai, Kasilof, Crescent, Susitna rivers, Fish Creek, West Cook Inlet (West), and Knik/Turnagain/Northeast Cook Inlet (KTNE). Genetic stock identification estimates for the West and KTNE reporting groups were aggregated to represent "other" stocks in comparative analyses with age allocation model results.
+Fishery-specific genetic stock identification estimates spanning 2005 to 2024 were complied from various reports (Barclay, A. W., 2020; Barclay and Chenoweth 2021; Barclay 2024; A. W. Barclay, Fishery Biologist, Alaska Department of Fish and Game, Anchorage, personal communication) into a centralized dataframe for further analysis. The fisheries sampled for GSI analyses have varied over the time series but have generally consisted of four major strata including: Central District Drift, Central District Set Gillnet (ESSN), Northern District, and Westside (@fig-GSI). When applicable, the average of corridors only and non-corridor GSI estimates were used to represent the Central Distrct Drift area strata to ensure comparability with age allocation model results (the age allocation model does not treat these fisheries independently). Furthermore, the average of Kalgin Island and Westside GSI estimates were used to represent the Westside area strata because these fisheries are often reported as an aggregate due to low sample sizes and the inability to ensure pure mixtures among these fisheries. Primary stocks represented in GSI analyses include Kenai, Kasilof, Crescent, Susitna rivers, Fish Creek, West Cook Inlet (West), and Knik/Turnagain/Northeast Cook Inlet (KTNE). Genetic stock identification estimates for the West and KTNE reporting groups were aggregated to represent "other" stocks in comparative analyses with age allocation model results.
 
 ```{r, echo=F, message=F}
 GSI<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/GSI.Aggregated.csv"))%>%
@@ -73,8 +92,12 @@ GSI<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/
 ```
 
 ```{r, echo=F, message=FALSE, warning=F}
-GSI%>%ggplot()+
-  geom_bar(aes(Year,round(Comp,digits=2),fill=Stock),stat="identity")+
+#| label: fig-GSI
+#| fig-cap: Historical GSI estimates for primary sampled fisheries, 2005 to 2024.
+
+GSI%>%
+  ggplot()+
+  geom_bar(aes(Year,round(Comp,digits=5),fill=Stock),stat="identity")+
   facet_grid(Fishery~.)+
   theme_bw()+
   ylab("Proportion of harvest")+
@@ -83,15 +106,14 @@ GSI%>%ggplot()+
 
 ```
 
-Figure 1.- Historical GSI estimates for primary sampled fisheries, 2005 to 2024.
-
 ### Commercial Harvest Data
 
-Harvest data was exported from OceanAk's Statewide Salmon Fishticket database as annual totals of sockeye salmon harvest by statistical area using the following filters: Management Unit Code == "UCI", Harvest Code /= "21; 22 ;23 ;24; 41; 42; 43", Species Code == 420, Batch year is between 2005 and 2024. Annual totals were then assigned to fishery strata based on statistical area and gear code (Table 2). Once assigned to a fishery, statistical area harvest totals were summed by year for fishery specific annual grand totals (Figure 2).
-
-Table 1.- Statistical areas included within each fishery stratum.
+Harvest data was exported from OceanAk's Statewide Salmon Fishticket database as annual totals of sockeye salmon harvest by statistical area using the following filters: Management Unit Code == "UCI", Harvest Code /= "21; 22 ;23 ;24; 41; 42; 43", Species Code == 420, Batch year is between 2005 and 2024. Annual totals were then assigned to fishery strata based on statistical area and gear code (@tbl-Fisherystatareas). Once assigned to a fishery, statistical area harvest totals were summed by year for fishery specific annual grand totals (@fig-Fisherytotals).
 
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: tbl-Fisherystatareas
+#| tbl-cap: Statistical areas included within each fishery stratum.
+
 Harvest<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/Upper Cook Inlet Historical Harvest.csv"))%>%rename("Year"=Batch.Year)%>%
   mutate(Fishery=ifelse(Stat.Area%in%c(24741,24742,24743,24710,24720,24730,24790,24780,24770),"Northern District",
                                ifelse(Stat.Area%in%c(24510,24520,24530,24540,24550,24555,24560,24610,24620)&Gear.Code==4,"Westside",
@@ -116,36 +138,37 @@ Harvest%>%group_by(Fishery)%>%summarize(Stat.Area=as.factor(unique(Stat.Area)))%
 ```
 
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: fig-Fisherytotals
+#| fig-cap: Harvest totals by fishery strata, 2005 to 2024.
 
 Harvest.Sum%>%
   ggplot()+
   geom_bar(aes(Year,Harvest, fill=Fishery), stat="identity")+
-  theme_classic()+
-  scale_y_continuous(labels = comma)+
+  theme_bw()+
+  scale_y_continuous(labels = comma, expand = c(0, 0))+
   labs(fill='Fishery strata')+
   ylab("Total Harvest")+
   xlab("")+
+
   theme(text = element_text(family = "serif")) 
 
 ```
 
-Figure 2.- Harvest totals by fishery strata, 2005 to 2024.
-
 ### Data Analysis
 
-Age allocation model performance was assessed for each stock across all fisheries and years using coefficient of variation (CV) between GSI and age allocation stock compositions. Coefficient of variation was chosen over other metrics as to ensure a meaningful zero value for fisheries in which the age allocation model did not assume the full compliment of stock composition. Prior to estimating CV values, GSI and harvest datasets were truncated to years spanning 2017 to 2024 to ensure comparable results among methods. GSI derived allocation estimates were assumed to be the true stock composition of commercial harvests for all analyses reported here.
+Age allocation model performance was assessed for each stock across all fisheries and years using coefficient of variation (CV) between GSI and age allocation stock compositions. Coefficient of variation was chosen over other metrics as to ensure a meaningful zero value for fisheries in which the age allocation model did not assume the full compliment of stock composition. Prior to estimating CV values, GSI and harvest datasets were truncated to years spanning 2017 to 2024 to ensure comparable results among methods. Genetic stock identification estimates for each harvest year were assumed to be the true stock composition of commercial harvests for all analyses reported here.
 
-Several methods for inseason stock allocation were explored using a hindcasting approach with historical fishery-specific GSI data. Stock compositions for each fishery were first lagged by one year and a 3-, 5-, and 10-year rolling average applied. An exponential smoothing approach was also explored by following a similar approach but using 3-, 5-, and 10-year sliding windows. Simulated stock compositions were applied to the commercial harvests for each year and fishery to produce inseason stock-specific harvest estimates. Performance of alternative stock allocation methods were assessed using CV against realized GSI estimates. For each year, the alternative allocation method for each stock and fishery with the lowest average CV score over the previous three years was chosen for stock allocation. Stock composition across fisheries were summed to generate annual stock-specific harvest estimates.
+A GSI allocation method was evaluated using a hindcasting approach based on historical, fishery-specific GSI data. Realized stock compositions for each fishery were lagged by one year and modeled using 3-, 5-, and 10-year rolling averages as well as exponential smoothing techniques. These simulated stock compositions were then applied to commercial harvest data by year and fishery to produce “in-season” stock-specific harvest estimates. To assess the performance of each simulation method, coefficient of variation (CV) was calculated between simulated and realized stock-specific harvest estimates, stratified by year, stock, and fishery. The simulation method yielding the lowest average CV over the previous three years was selected as the optimal model for each year-stock-fishery combination. Finally, stock-specific harvest estimates from optimal models were summed across all fisheries to produce annual stock-specific harvest estimates.
 
-An inseason tier-status assessment is annually performed for late-run stock Kenai River sockeye salmon. Historically, the tier status assessment had relied on cumulative catch-per-unit-effort timing curves from the offshore test fish project (OTF) to project the total run to the Kenai River. This method provided unbiased estimates of run timing because performance of this fishery is largely independent of management actions. In 2024, the OTF project was cut due to budget issues which required other methods to be explored for the inseason projection. Inriver run timing curves were assessed using historical total run data and were found to provide reliable total run projection estimates within the scope of run tier designations.
+An inseason tier-status assessment is conducted annually for the late-run Kenai River sockeye salmon stock. This assessment provides a projected total run estimate, which informs the tier under which the Alaska Department of Fish and Game (ADF&G) manages the commercial fisheries for the remainder of the season. The tiers are defined based on total run size: a lower tier corresponds to fewer than 2.3 million fish, a middle tier to a run between 2.3 and 4.6 million fish, and an upper tier to a run exceeding 4.6 million fish. Although the exact date of the tier-status assessment has varied somewhat over the years, it is typically performed around July 20. Historically, projections for this assessment relied on cumulative catch-per-unit-effort (CPUE) timing curves from the Offshore Test Fishery (OTF). In 2024, however, the methodology was updated to use inriver run timing curves from the RM 19 sonar project combined with a weighted model selection approach. These changes improved the reliability of total run projections within the scope of tier thresholds, according to internal evaluation (personal communcation,Kyle Gatt, Fishery Biologist 4 at ADF&G). Because of inconsistent projection methods, this report will only focus on the 2024 inseason run tier-assessment.
 
-Stock-specific inriver run timing models spanning years 2000 to 2023 were evaluated to project the total run of sockeye salmon to the Kenai River. Projection model performance was assessed using the mean arc-tangent absolute percent error (MAAPE) between the projected daily total run estimates and actual runs up to the date the projection was run. The top three models with the lowest MAAPE were selected for each stock and a weighted hybrid model approach was applied. Model weights were assigned based on the running MAAPE of each selected model, with a lower MAAPE receiving a greater weight towards the final projection estimate.
+To evaluate the performance of age- and GSI-based allocation methods for this application, inriver run timing models spanning the years 2000 to 2023 were used to project the total run of sockeye salmon to the Kenai River under each method. Model performance was assessed using the Mean Arctangent Absolute Percentage Error (MAAPE), which compared projected daily total run estimates to actual run values, derived from each allocation method, up to the date of the projection. The top three run-timing models with the lowest MAAPE were selected for each allocation method and a weighted hybrid model approach was applied. Model weights were assigned based on the running MAAPE of each selected model, with a lower MAAPE receiving a greater weight towards the final projection estimate. Final projection estimates were then compared among allocation methods through the context management actions.
 
 # Results
 
 ### Age Allocation Performance
 
-Since 2017, the age allocation model has achieved an average CV score of 28.5 across all fisheries, stocks, and years. Precision was highest for the Susitna (CV = 22.3) and Other (CV = 23.31) stocks but lowest for the Crescent (CV=45.2), Kasilof (CV = 29.3) and Fish Creek (CV = 29.5) stocks. The Central District Drift (CV = 19.1) and Westside fisheries (CV = 24.3) achieved the highest average precision. No linear trends were detected in the precision of the age allocation model for each fishery and stock across individual time series. The age allocation model has had an average absolute error in estimating the commercial harvest of Kenai and Kasilof stocks of 41,900 (range: -252,700 to 96,000) and 45,800 (range: -187,000 to 321,600) fish respectively.
+Since 2017, the age allocation method has achieved an average CV score of 28.5 across all fisheries, stocks, and years. Precision was highest for the Susitna (CV = 22.3) and Other (CV = 23.31) stocks but lowest for the Crescent (CV=45.2), Kasilof (CV = 29.3) and Fish Creek (CV = 29.5) stocks. The Central District Drift (CV = 19.1) and Westside fisheries (CV = 24.3) achieved the highest average precision. The age allocation method has had an average absolute error in estimating the commercial harvest of Kenai and Kasilof stocks of 41,900 and 35,800 fish respectively.
 
 ```{r, echo=F, message=FALSE, warning=F, include=F}
 GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
@@ -172,9 +195,10 @@ GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
 
 ```
 
-Table 3.- Average precision, measured by coefficient of variation, between the true stock-specific harvest estimates and those generated with age and GSI allocation methods for each stock and fishery, 2017 to 2024. The mean absolute difference, in terms of fish, is indicated in the difference column.
-
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: tbl-AgePrecision
+#| tbl-cap: Average precision, measured by coefficient of variation, between the true stock-specific harvest estimates and those generated with age allocation methods for each stock and fishery, 2017 to 2024.
+
 
 By.Stock.Fishery<-GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum)%>%
   mutate(True.Harvest=Comp*Harvest)%>%
@@ -229,9 +253,9 @@ By.Stock.Fishery%>%
 
 ```
 
-### GSI Allocation Performance
+### Post-Season GSI Allocation Method Performance
 
-The GSI allocation method produced generally similar post-season stock specific harvest estimates as the age allocation method for most stocks and years (Figure 3). Precision of stock specific harvest estimates across all fisheries and stocks were not statistically different among allocation methods (P\>0.05) (Table 4).
+The GSI allocation method produced generally similar post-season stock specific harvest estimates as the age allocation method for most stocks and years (@fig-AgevsGSI). Precision of stock-specific harvest estimates across all fisheries and stocks were not statistically different among allocation methods (p\>0.05) (@tbl-Precisionbymethod).
 
 ```{r, echo=F, message=FALSE, warning=F,include=F}
 
@@ -317,6 +341,9 @@ MethodsAgg<-rbind(GSIMeans%>%select(1:3,10:13)%>%rename("Roll 3"=RollHarvest3, "
 ```
 
 ```{r, echo=F, message=FALSE, warning=F,fig.height=10}
+#| label: fig-AgevsGSI
+#| fig-cap: Stock-specific commercial harvest estimates by stock, year, and allocation method. The grey bars represent realized stock-specific harvest estimates using post-season GSI estimates. The blue dots represent simulated stock-specific harvest estimates using the inseason GSI allocation method. The shaded region represents the time frame for which age allocation model results are available.
+
 
 MethodsAgg%>%select(Year:Total,Selected)%>%
   filter(Selected%in%"Selected")%>%group_by(Year, Stock)%>%summarize(EstimatedHarvest=sum(Total), TrueHarvest=sum(unique(True.Harvest)))%>%mutate(Method="GSI Allocation")%>%
@@ -337,11 +364,13 @@ MethodsAgg%>%select(Year:Total,Selected)%>%
 
 ```
 
-Figure 3.- Stock-specific commercial harvest estimates by stock, year, and allocation method. The grey shaded region represents the time frame for which age allocation model results are available.
-
-Table 4.- Average precision, measured by coefficient of variation between annual stock-specific harvest estimates generated with GSI and age allocation methods relative to actual stock-specific harvest estimates, across all fisheries and stocks, 2017 to 2024. The mean absolute difference across all fisheries for each stock and allocation method is indicated in the "Difference" column.
+::: {style="margin-bottom:20px;"}
+:::
 
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: tbl-Precisionbymethod
+#| tbl-cap: Average precision, measured by coefficient of variation between annual stock-specific harvest estimates generated with GSI and age allocation methods relative to actual stock-specific harvest estimates, across all fisheries and stocks, 2017 to 2024. The mean absolute difference across all fisheries for each stock and allocation method is indicated in the "Difference" column.
+
 
 MethodsAgg%>%select(Year:Total,Selected)%>%
   filter(Selected%in%"Selected")%>%group_by(Year, Stock)%>%summarize(EstimatedHarvest=sum(Total), TrueHarvest=sum(unique(True.Harvest)))%>%mutate(Method="GSI Allocation")%>%
@@ -376,9 +405,7 @@ Test<-MethodsAgg%>%select(Year:Total,Selected)%>%
 
 ### Inseason Run Tier Assessment Performance
 
-The GSI allocation method produced a somewhat similar total run timing curve for late-run Kenai River sockeye salmon as did with age allocation. Total run timing varied by one-day, with the age allocation occurring July 20th and the GSI alternative on July 19th (Figure 5).
-
-On July 23, 2024 the department projected total run of 3.55 million sockeye salmon to the Kenai River using the age allocation model. This projected total run maintained the forecast middle-tier status (2.3 to 4.6 million). The realized total run for late-run Kenai River sockeye salmon in 2024 was 3.77 million fish (Table 5; Figure 6). The GSI allocation method projected a total run for late-run Kenai River sockeye salmon of 5.23 million fish, which would have resulted in an upper-tier status change (Table 5).
+The GSI allocation method overestimated the total run of late-run Kenai River sockeye salmon relative to the age allocation method prior to the projection date of July 23, 2024 (@fig-Actualtiming).
 
 ```{r, echo=F, message=FALSE, warning=F, include=F}
 # Importing Timing Data
@@ -466,7 +493,7 @@ Test.1<-Timing%>%
 
 
 Test.2<-Test.1%>%
-  filter(Date<as.Date("2024-07-23", format="%Y-%m-%d"))%>%# Filter to the projection date
+  filter(Date<=as.Date("2024-07-23", format="%Y-%m-%d"))%>%# Filter to the projection date
   left_join(Combined)%>%# Combining true counts
   group_by(Method,Year)%>%summarize(MAAPE=mean(maape(Total,Daily)))%>%
   group_by(Method)%>%slice_min(order_by=MAAPE,n=3)%>%select(Method,Year,MAAPE)
@@ -475,6 +502,9 @@ Test.2<-Test.1%>%
 ```
 
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: fig-Actualtiming
+#| fig-cap: Daily total run estimates for late-run Kenai River stock sockeye salmon by stock apportionment method, 2024.
+
 Combined%>%
   filter(Date<as.Date("2024-07-24", format="%Y-%m-%d"))%>%
   ggplot()+
@@ -486,11 +516,15 @@ Combined%>%
 
 ```
 
-Figure 5.- Daily total run estimates for late-run Kenai River stock sockeye salmon by stock apportionment method, 2024.
+::: {style="margin-bottom:20px;"}
+:::
 
-Table 5.- Top selected run timing models used the inseason run tier assessment by allocation method, 2024.
+The age allocation model projected a total run of 3.59 million sockeye salmon to the Kenai River, which would have maintained the forecasted middle-tier status (2.3 to 4.6 million) (@tbl-Selectedtiming). The GSI allocation method projected a much larger total run of 5.23 million fish, which would have resulted in an upper-tier status change (@tbl-Selectedtiming). The realized total run for late-run Kenai River sockeye salmon in 2024 was 3.77 million fish.
 
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: tbl-Selectedtiming
+#| tbl-cap: Top selected run timing models used the inseason run tier assessment by allocation method, 2024.
+
 
 Test.2%>%
   left_join(Test.1%>%filter(Date%in%"2024-07-23")%>%select(Method,Year,Projection))%>%
@@ -513,8 +547,12 @@ Test.2%>%
 
 ```
 
-```{r, echo=F, message=FALSE, warning=F, fig.height=8}
+::: {style="margin-bottom:20px;"}
+:::
 
+```{r, echo=F, message=FALSE, warning=F, fig.height=8}
+#| label: fig-ProjectionPlot
+#| fig-cap: Projected cumulative total run estimates for the top three selected run timing models (black lines) for each stock allocation method relative to the observed cumulative total run estimated derived from each allocation method.
 
 Test.1%>%
   left_join(Test.2%>%mutate(Select=Year))%>%
@@ -534,17 +572,23 @@ Test.1%>%
 
 ```
 
-Figure 6.- Projected cumulative total run estimates for the top three selected run timing models (black lines) for each stock allocation method relative to the observed cumulative total run estimated derived from each allocation method.
-
 # Recommendations
 
-Overall, the age allocation model performed relatively well at estimating stock-specific harvest estimates. This was especially the case for the Kenai stock. However, the age allocation model struggled to allocate less represented stocks in several fisheries because of the strong influence of the Kenai stock on allocations.
+Overall, the age allocation model performed relatively well at estimating stock-specific harvest estimates. This was especially the case for the Kenai stock. However, the age allocation model struggled to allocate less represented stocks as this approach cannot assume the full compliment of stock compositions.
 
-On average, GSI allocation yielded marginally less precise post-season stock-specific harvest estimates than did the GSI alternative for primary stocks (Kenai and Kasilof) but were not statistically different among allocation methods.
+On average, GSI allocation method yielded similar post-season stock-specific harvest estimates as the age allocation method. Precision of stock-specific harvest estimates were also similar among allocation methods, but were marginally less precise for the Kenai and Kasilof stocks.
 
-The GSI alternative method of stock allocations projected a different mid-season tier designation compared to the age allocation model. This result was somewhat expected, as the GSI method presented here assumes a static stock composition within each fishery throughout the entire season. This static approach tends to overestimate Kenai contributions early in the season, before the peak of the stock’s run timing, resulting in inflated total run projections. The GSI method used here is a broad-stroke approach based on aggregated annual GSI estimates and does not utilize the full set of available GSI data. This limits its temporal resolution. For instance, in 2023, GSI estimates from corridor-only fishing periods showed that the Kenai contribution to the Central District Drift harvest increased from 33% in the first temporal stratum (6/19–7/12) to over 65% in the final stratum (7/18–8/2). When temporal variation is incorporated into the GSI model, total run projections align more closely with those produced by the age allocation method (see Appendices 2 through 4).
+The GSI allocation method projected a much larger total run than did the age allocation model and would resulted in a mid-season tier designation change in 2024. This result was somewhat anticipated, as the GSI method presented here assumes a static stock composition within each fishery. This static approach tends to overestimate Kenai contributions early in the season, before the stock’s peak run timing, resulting in inflated total run projection. The GSI allocation method presented here is a broad-stroke approach based on aggregated annual GSI estimates and does not account for temporal variation in stock-compositions. If we incorporate some temporal variation into the GSI allocation model by assuming a 50% reduction in the Kenai contribution prior to July 20th across all fisheries, the GSI allocation method projects a similar total run estimate as the age allocation model and is near the true estimate (@fig-Temporalcurve, @fig-Temporalselect, @tbl-Temporaltable) . This correction is based on 2023 GSI data from the Central District Drift harvest that showed the Kenia contribution to corridor-only harvests increase on average from 38% prior to July 20th to over 72% after July 20th.
 
-**Overall, adoption of the GSI allocation approach presents several advantages: it yields similar final total run estimates as the age allocation model, requires far fewer assumptions, and reduces the need for timely in-season age composition data which will allow for re-allocation of resources to other sampling efforts (e.g., Northern District North, Coho sampling). However, refinements are needed before full implementation. First, all historical GSI data should be compiled into a centralized database, rather than using annual averages as done here. Second, GSI estimates for corridor-only and non-corridor harvests should be analyzed separately due to their distinct stock compositions.**
+**Overall, adoption of the GSI allocation approach presents several advantages: it yields similar final total run estimates as the age allocation model, it is far more simpler to employ, and reduces the need for timely in-season age composition data which will allow for re-allocation of resources to other sampling efforts (e.g., Northern District North, Coho sampling). However, refinements are needed before full implementation. Next step for this transition to occur include:**
+
+-   **Staff need to seek biometric support to refine modeling techniques.**
+
+-   **Develop a GSI database using raw non-aggregated GSI data.**
+
+-   **Refine GSI allocations to apportion by statistical areas rather than aggregated broad areas (this will account for differences in corridor and non-corridor only periods and variable run timing to districts).**
+
+-   **Design catch and escapement sampling goals to maximize GSI temporal resolution.**
 
 # References
 
@@ -558,25 +602,28 @@ Tobias T. M., and T. M. Willette. 2013. An estimate of total return of sockeye s
 
 # Appendices
 
-Appendix 1.- Aggregated GSI, Harvest, and age allocation results used for analyses.
-
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: tbl-Data
+#| tbl-cap: Aggregated GSI, Harvest, and age allocation results used for analyses.
 
 datatable(GSI%>%left_join(AgeAllocation)%>%left_join(Harvest.Sum))
   
 ```
 
-Appendix 2.- Daily total run estimates by stock allocation method assuming a 60% reduction in Kenai GSI estimates prior to July 20th.
+::: {style="margin-bottom:30px;"}
+:::
 
 ```{r, echo=F, message=FALSE, warning=F, include=F}
+
+
 
 # Apply stock comps of Kenai fish to commercial harvest but only after July 1
 CommTR.0<-TRUnallocated%>%filter(Fate%in%"Commercial Harvest")%>%
   left_join(Comps)%>%
   mutate(Date=as.Date(Date,format="%m/%d/%Y"))%>%
   
-  mutate(Condition=ifelse(Date<as.Date("2024-07-20",format="%Y-%m-%d"),"yes","no"))%>%
-  mutate(Composition=ifelse(Condition%in%"yes",Composition*.6,Composition))%>%
+  mutate(Condition=ifelse(Date<as.Date("2024-07-20",format="%Y-%m-%d") ,"yes","no"))%>%
+  mutate(Composition=ifelse(Condition%in%"yes",Composition*.55,Composition))%>%
   
   mutate(Season.Total=Season.Total*Composition)%>%
   group_by(Date)%>%summarize(Total=sum(Season.Total,na.rm=T))%>%
@@ -616,6 +663,8 @@ Test.2.0<-Test.1.0%>%
 ```
 
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: fig-Temporalcurve
+#| fig-cap: Daily total run estimates by stock allocation method using 2024 data. The GSI allocaiton method assumes a 50% reduction in the Kenai contribution across all fisheries prior to July 20th.
 
 Combined.0%>%
   filter(Date<as.Date("2024-07-24", format="%Y-%m-%d"))%>%
@@ -629,9 +678,13 @@ Combined.0%>%
 
 ```
 
-Appendix 3.- Projected total run estimates by stock allocation method assuming a 60% reduction in Kenai GSI estimates prior to July 20th.
+::: {style="margin-bottom:20px;"}
+:::
 
 ```{r, echo=F, message=FALSE, warning=F}
+#| label: tbl-Temporaltable
+#| tbl-cap: Projected total run estimates by stock allocation method using 2024 data. The GSI allocation method assumes a 50% reduction in Kenai contribution across all fisheries prior to July 20th.
+
 
 Test.2.0%>%
   left_join(Test.1.0%>%filter(Date%in%"2024-07-23")%>%select(Method,Year,Projection))%>%
@@ -653,10 +706,12 @@ Test.2.0%>%
 
 ```
 
-Appendix 4.- Projected cumulative total run estimates for the top three selected run timing models (black lines) for each stock allocation method relative to the observed cumulative total run derived from each allocation method. The GSI allocation method assumes a 60% reduction in Kenai GSI estimates prior to July 20th.
+::: {style="margin-bottom:20px;"}
+:::
 
 ```{r, echo=F, message=FALSE, warning=F}
-
+#| label: fig-Temporalselect
+#| fig-cap: Projected cumulative total run estimates for the top three selected run timing models (black lines) for each stock allocation method relative to the observed cumulative total run derived from each allocation method using 2024 data. The GSI allocation method assumes a 50% reduction in Kenai GSI estimates prior to July 20th.
 
 Test.1.0%>%
   left_join(Test.2.0%>%mutate(Select=Year))%>%
