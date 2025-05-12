@@ -68,7 +68,7 @@ Although the age allocation model has been used to generate stock-specific harve
 
 
 # Import Age Allocation Results 
-AgeAllocation<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/AgeAllocationPerformance.csv"))   
+AgeAllocation<-read.csv(file("Data/AgeAllocationPerformance.csv"))   
 
 AgeAllocation%>%filter(Allocation>0)%>%
   group_by(Fishery)%>%summarize(Stock=unique(Stock))%>%   
@@ -87,7 +87,7 @@ AgeAllocation%>%filter(Allocation>0)%>%
 Fishery-specific genetic stock identification estimates spanning 2005 to 2024 were complied from various reports (Barclay, A. W., 2020; Barclay and Chenoweth 2021; Barclay 2024; A. W. Barclay, Fishery Biologist, Alaska Department of Fish and Game, Anchorage, personal communication) into a centralized dataframe for further analysis. The fisheries sampled for GSI analyses have varied over the time series but have generally consisted of four major strata including: Central District Drift, Central District Set Gillnet (ESSN), Northern District, and Westside (@fig-GSI). When applicable, the average of corridors only and non-corridor GSI estimates were used to represent the Central Distrct Drift area strata to ensure comparability with age allocation model results (the age allocation model does not treat these fisheries independently). Furthermore, the average of Kalgin Island and Westside GSI estimates were used to represent the Westside area strata because these fisheries are often reported as an aggregate due to low sample sizes and the inability to ensure pure mixtures among these fisheries. Primary stocks represented in GSI analyses include Kenai, Kasilof, Crescent, Susitna rivers, Fish Creek, West Cook Inlet (West), and Knik/Turnagain/Northeast Cook Inlet (KTNE). Genetic stock identification estimates for the West and KTNE reporting groups were aggregated to represent "other" stocks in comparative analyses with age allocation model results.
 
 ```{r, echo=F, message=F}
-GSI<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/GSI.Aggregated.csv"))%>%
+GSI<-read.csv(file("Data/GSI.Aggregated.csv"))%>%
   mutate(Stock=ifelse(Stock%in%"KTNE" | Stock%in%"West","Other",Stock))%>%
   group_by(Year, Fishery,Stock)%>%summarize(Comp=sum(Comp))
 ```
@@ -115,7 +115,7 @@ Harvest data was exported from OceanAk's Statewide Salmon Fishticket database as
 #| label: tbl-Fisherystatareas
 #| tbl-cap: Statistical areas included within each fishery stratum.
 
-Harvest<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/Upper Cook Inlet Historical Harvest.csv"))%>%rename("Year"=Batch.Year)%>%
+Harvest<-read.csv(file("Data/Upper Cook Inlet Historical Harvest.csv"))%>%rename("Year"=Batch.Year)%>%
   mutate(Fishery=ifelse(Stat.Area%in%c(24741,24742,24743,24710,24720,24730,24790,24780,24770),"Northern District",
                                ifelse(Stat.Area%in%c(24510,24520,24530,24540,24550,24555,24560,24610,24620)&Gear.Code==4,"Westside",
                                              ifelse(Stat.Area%in%c(24442,24441,24432,24431,24422,24421),"ESSN",
@@ -414,7 +414,7 @@ The GSI allocation method overestimated the total run of late-run Kenai River so
 
 ```{r, echo=F, message=FALSE, warning=F, include=F}
 # Importing Timing Data
-Sonar<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/KeKa_Hist_Sonar.csv"))%>%
+Sonar<-read.csv(file("Data/KeKa_Hist_Sonar.csv"))%>%
   mutate(Date=as.Date(Date, format="%m/%d"))%>%
   mutate(Day=day(Date), Month=month(Date))%>%
  mutate(Date=make_date(Year, day=Day, month=Month))%>%
@@ -436,7 +436,7 @@ Timing<-Sonar%>%
 
 
 #Importing unallocated total run Tracking estimates
-TRUnallocated<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/TotalRunUnallocated.csv"))%>%
+TRUnallocated<-read.csv(file("Data/TotalRunUnallocated.csv"))%>%
   filter(!Fishery.Project%in%c("Crescent Escapement", "Fish Creek Escapement","Kasilof River Escapement", "Susitna Escapement", "Kasilof Personal Use Gillnet", "Other", "Fish Creek Personal Use", "Kasilof Personal Use Dipnet","Kasilof Sport"))%>%
   mutate(Fishery.Project=ifelse(Fishery.Project%in%c("Central District Drift - State Waters","UCI EEZ" ),"Central District Drift",
          ifelse(Fishery.Project%in%c("Northern District Set Net Fishery - Eastern Subdistrict","Northern District Set Net Fishery - General Subdistrict"),"Northern District",
@@ -480,7 +480,7 @@ TRUnallocated%>%mutate(Date=as.Date(Date,format="%m/%d/%Y"))%>%filter(!Fate%in%"
   
 
 # Bind to age allocation results
-Inseason.Results<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/Final.Inseason.Results.csv"))%>%filter(Stock%in%"Kenai")%>%group_by(Date)%>%summarize(Total=sum(UCI.Total))%>%mutate(Method="Age Allocation")%>%mutate(Date=as.Date(Date,format="%Y-%m-%d"))
+Inseason.Results<-read.csv(file("Data/Final.Inseason.Results.csv"))%>%filter(Stock%in%"Kenai")%>%group_by(Date)%>%summarize(Total=sum(UCI.Total))%>%mutate(Method="Age Allocation")%>%mutate(Date=as.Date(Date,format="%Y-%m-%d"))
 
 
 Combined<-rbind(ALt.TR,Inseason.Results)
@@ -642,7 +642,7 @@ TRUnallocated%>%mutate(Date=as.Date(Date,format="%m/%d/%Y"))%>%filter(!Fate%in%"
   
 
 # Bind to age allocation results
-Inseason.Results<-read.csv(file("C:/Users/kpgatt/OneDrive - State of Alaska/Documents/GitHub/Age-Allocation-Assessment/Data/Final.Inseason.Results.csv"))%>%filter(Stock%in%"Kenai")%>%group_by(Date)%>%summarize(Total=sum(UCI.Total))%>%mutate(Method="Age Allocation")%>%mutate(Date=as.Date(Date,format="%Y-%m-%d"))
+Inseason.Results<-read.csv(file("Data/Final.Inseason.Results.csv"))%>%filter(Stock%in%"Kenai")%>%group_by(Date)%>%summarize(Total=sum(UCI.Total))%>%mutate(Method="Age Allocation")%>%mutate(Date=as.Date(Date,format="%Y-%m-%d"))
 
 
 Combined.0<-rbind(ALt.TR.0,Inseason.Results)
