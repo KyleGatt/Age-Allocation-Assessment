@@ -18,6 +18,7 @@ format:
   html: 
     code-tools:
       source: https://github.com/KyleGatt/Age-Allocation-Assessment
+    toc: true
 editor: visual
 embed-resources: true
 engine: knitr
@@ -587,15 +588,15 @@ The GSI allocation method projected a significantly larger total run than the ag
 
 The GSI allocation method presented here is a broad-stroke approach that relies on aggregated annual GSI estimates and does not account for temporal variation in stock composition. To address this limitation, we incorporated a simplified temporal adjustment into the model by assuming a 50% reduction in the Kenai contribution across all fisheries prior to July 20th. With this adjustment, the GSI allocation method yields a total run estimate more closely aligned with the age allocation model and is comparable to the observed total run (@fig-Temporalcurve, @fig-Temporalselect, @tbl-Temporaltable). This correction is supported by 2023 GSI data from the Central District Drift harvest, which showed the average Kenai contribution to corridor-only harvests increased from approximately 38% before July 20th to over 72% after July 20th.
 
-**Overall, adopting the GSI allocation approach offers several key advantages.** **It produces final total run estimates comparable to those derived from the age allocation model, is significantly simpler to implement, and reduces reliance on timely in-season age composition data. This, in turn, enables reallocation of resources toward other critical sampling efforts (e.g., Northern District North or Coho sampling). However, further refinements are necessary before full-scale implementation can proceed. The following next steps are recommended to support this transition:**
+Overall, adopting the GSI allocation approach offers several key advantages. It produces final total run estimates comparable to those derived from the age allocation model, is significantly simpler to implement, and reduces reliance on timely in-season age composition data. This, in turn, enables reallocation of resources toward other critical sampling efforts (e.g., Northern District North or Coho sampling). However, further refinements are necessary before full-scale implementation can proceed. The following next steps are recommended to support this transition:
 
--   **Seek biometric support to refine and enhance GSI-based modeling techniques.**
+-   Seek biometric support to refine and enhance GSI-based modeling techniques.
 
--   **Develop a comprehensive GSI database using raw, non-aggregated genetic stock identification data.**
+-   Develop a comprehensive GSI database using raw, non-aggregated genetic stock identification data.
 
--   **Improve allocation resolution by apportioning GSI data to statistical areas rather than broad, aggregated regions. This will help capture differences between corridor and non-corridor periods and account for variability in run timing across districts.**
+-   Improve allocation resolution by apportioning GSI data to statistical areas rather than broad, aggregated regions. This will help capture differences between corridor and non-corridor periods and account for variability in run timing across districts.
 
--   **Design catch and escapement sampling goals that maximize temporal resolution for GSI data collection.**
+-   Design catch and escapement sampling goals that maximize temporal resolution for GSI data collection.
 
 # References
 
