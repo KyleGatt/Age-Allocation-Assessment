@@ -1,5 +1,7 @@
 ---
 title: "Allocation Methods Assessment"
+project:
+  type: manuscript
 author: 
   - name: Kyle Gatt
     email: kyle.gatt@alaska.gov
@@ -19,6 +21,8 @@ format:
     code-tools:
       source: https://github.com/KyleGatt/Age-Allocation-Assessment
     toc: true
+    comments:
+      hypothesis: true
 editor: visual
 embed-resources: true
 engine: knitr
@@ -41,7 +45,6 @@ library(lubridate)
 library(TSrepr)
 library(gghighlight)
 library(tidyverse)
-
 
 ```
 
